@@ -1,16 +1,17 @@
 [package]
-name = "safeup"
+name = "antup"
 authors = ["MaidSafe Developers <dev@maidsafe.net>"]
-description = "CLI for installing components for accessing the Safe Network"
+description = "CLI for installing components for accessing the Autonomi network"
 license = "GPL-3.0"
 version = "0.8.1"
 edition = "2021"
 
 [[bin]]
-name = "safeup"
+name = "antup"
 path = "src/main.rs"
 
 [dependencies]
+ant-releases = "0.4.0"
 clap = { version = "4.1.6", features = ["derive"] }
 chrono = "0.4.26"
 color-eyre = "0.6.2"
@@ -24,7 +25,6 @@ semver = "1.0.4"
 serde = "1.0"
 serde_derive = "1.0"
 serde_json = "1.0"
-sn-releases = "0.3.1"
 tempfile = "3.8.1"
 textwrap = "0.16.0"
 tokio = { version = "1.26", features = ["full"] }

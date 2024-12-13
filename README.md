@@ -1,4 +1,4 @@
-# safeup
+# antup
 
 Simple utility for installing and updating safe-related components.
 
@@ -6,48 +6,48 @@ Simple utility for installing and updating safe-related components.
 
 ### Linux/macOS
 
-You can choose to run the installation for `safeup` as the current user or with `sudo`. The difference between them is the install location and modification of the shell profile. If running with `sudo`, `safeup` will be installed to `/usr/local/bin`; otherwise it will be installed to `~/.local/bin` and the Bash shell profile will be modified to add that location to the `PATH` variable. For almost any Linux-based or macOS installation, `/usr/local/bin` is already available on `PATH` as standard.
+You can choose to run the installation for `antup` as the current user or with `sudo`. The difference between them is the install location and modification of the shell profile. If running with `sudo`, `antup` will be installed to `/usr/local/bin`; otherwise it will be installed to `~/.local/bin` and the Bash shell profile will be modified to add that location to the `PATH` variable. For almost any Linux-based or macOS installation, `/usr/local/bin` is already available on `PATH` as standard.
 
 To install as `sudo`, use the following:
 ```
-curl -sSL https://raw.githubusercontent.com/maidsafe/safeup/main/install.sh | sudo bash
+curl -sSL https://raw.githubusercontent.com/maidsafe/antup/main/install.sh | sudo bash
 ```
 
 Otherwise:
 ```
-curl -sSL https://raw.githubusercontent.com/maidsafe/safeup/main/install.sh | bash
+curl -sSL https://raw.githubusercontent.com/maidsafe/antup/main/install.sh | bash
 ```
 
-This process will download and install `safeup` for your platform.
+This process will download and install `antup` for your platform.
 
-The install script also accepts two flag arguments, namely `--client` and `--node`. If either are used, the script will invoke the installed `safeup` binary to install `autonomi` and `safenode`, respectively, without having to run either as an additional post-install step.
+The install script also accepts two flag arguments, namely `--client` and `--node`. If either are used, the script will invoke the installed `antup` binary to install `autonomi` and `safenode`, respectively, without having to run either as an additional post-install step.
 
 To use these options as `sudo`:
 ```
-curl -sSL https://raw.githubusercontent.com/maidsafe/safeup/main/install.sh | sudo bash -s -- --client
+curl -sSL https://raw.githubusercontent.com/maidsafe/antup/main/install.sh | sudo bash -s -- --client
 ```
 
 Otherwise:
 ```
-curl -sSL https://raw.githubusercontent.com/maidsafe/safeup/main/install.sh | bash -s -- --client
+curl -sSL https://raw.githubusercontent.com/maidsafe/antup/main/install.sh | bash -s -- --client
 ```
 
 ### Windows
 
-On Windows, we are currently not supporting installing either `safeup` or the other binaries with Administrator privileges, so there is only one command:
+On Windows, we are currently not supporting installing either `antup` or the other binaries with Administrator privileges, so there is only one command:
 ```
-iex (Invoke-RestMethod -Uri "https://raw.githubusercontent.com/maidsafe/safeup/main/install.ps1")
+iex (Invoke-RestMethod -Uri "https://raw.githubusercontent.com/maidsafe/antup/main/install.ps1")
 ```
 
 The Powershell installer does not support the `--client` or `--node` arguments because it's not possible to pass them when the script is downloaded.
 
-Therefore, installing any components on Windows is an additional post-safeup-installation step.
+Therefore, installing any components on Windows is an additional post-installation step.
 
 ## Usage
 
-Use the `client`, `node` or `testnet` commands to install the latest versions of the `autonomi`, `safenode` or `testnet` binaries, respectively. 
+Use the `client`, `node` or `antctl` commands to install the latest versions of the `ant`, `antnode` or `antctl` binaries, respectively. 
 
-As above, you can choose to run `safeup` using `sudo`, depending on where you'd like your binaries installed. Again, this does not apply to Windows, where we don't support running with Administrator privileges.
+As above, you can choose to run `antup` using `sudo`, depending on where you'd like your binaries installed. Again, this does not apply to Windows, where we don't support running with Administrator privileges.
 
 ## License
 

@@ -51,39 +51,39 @@ mod test {
     #[test]
     fn perform_upgrade_assessment_should_indicate_no_previous_installation() -> Result<()> {
         let settings = Settings {
-            autonomi_path: None,
-            autonomi_version: None,
-            safenode_path: Some(PathBuf::from("/home/chris/.local/bin/safenode")),
-            safenode_version: Some(Version::new(0, 83, 13)),
-            safenode_manager_path: Some(PathBuf::from("/home/chris/.local/bin/safenode-manager")),
-            safenode_manager_version: Some(Version::new(0, 1, 8)),
+            ant_path: None,
+            ant_version: None,
+            antnode_path: Some(PathBuf::from("/home/chris/.local/bin/safenode")),
+            antnode_version: Some(Version::new(0, 83, 13)),
+            antctl_path: Some(PathBuf::from("/home/chris/.local/bin/safenode-manager")),
+            antctl_version: Some(Version::new(0, 1, 8)),
         };
         let decision =
             perform_update_assessment(&AssetType::Client, &Version::new(0, 78, 26), &settings)?;
         assert_matches!(decision, UpdateAssessmentResult::NoPreviousInstallation);
 
         let settings = Settings {
-            autonomi_path: Some(PathBuf::from("/home/user/.local/autonomi")),
-            autonomi_version: Some(Version::new(0, 78, 26)),
-            safenode_path: None,
-            safenode_version: None,
-            safenode_manager_path: Some(PathBuf::from("/home/chris/.local/bin/safenode-manager")),
-            safenode_manager_version: Some(Version::new(0, 1, 8)),
+            ant_path: Some(PathBuf::from("/home/user/.local/autonomi")),
+            ant_version: Some(Version::new(0, 78, 26)),
+            antnode_path: None,
+            antnode_version: None,
+            antctl_path: Some(PathBuf::from("/home/chris/.local/bin/safenode-manager")),
+            antctl_version: Some(Version::new(0, 1, 8)),
         };
         let decision =
             perform_update_assessment(&AssetType::Node, &Version::new(0, 83, 13), &settings)?;
         assert_matches!(decision, UpdateAssessmentResult::NoPreviousInstallation);
 
         let settings = Settings {
-            autonomi_path: Some(PathBuf::from("/home/user/.local/autonomi")),
-            autonomi_version: Some(Version::new(0, 78, 26)),
-            safenode_path: Some(PathBuf::from("/home/chris/.local/bin/safenode")),
-            safenode_version: Some(Version::new(0, 83, 13)),
-            safenode_manager_path: None,
-            safenode_manager_version: None,
+            ant_path: Some(PathBuf::from("/home/user/.local/autonomi")),
+            ant_version: Some(Version::new(0, 78, 26)),
+            antnode_path: Some(PathBuf::from("/home/chris/.local/bin/safenode")),
+            antnode_version: Some(Version::new(0, 83, 13)),
+            antctl_path: None,
+            antctl_version: None,
         };
         let decision =
-            perform_update_assessment(&AssetType::NodeManager, &Version::new(0, 1, 8), &settings)?;
+            perform_update_assessment(&AssetType::AntCtl, &Version::new(0, 1, 8), &settings)?;
         assert_matches!(decision, UpdateAssessmentResult::NoPreviousInstallation);
 
         Ok(())
@@ -92,12 +92,12 @@ mod test {
     #[test]
     fn perform_upgrade_assessment_should_indicate_we_are_at_latest_version() -> Result<()> {
         let settings = Settings {
-            autonomi_path: Some(PathBuf::from("/home/user/.local/autonomi")),
-            autonomi_version: Some(Version::new(0, 78, 26)),
-            safenode_path: Some(PathBuf::from("/home/chris/.local/bin/safenode")),
-            safenode_version: Some(Version::new(0, 83, 13)),
-            safenode_manager_path: Some(PathBuf::from("/home/chris/.local/bin/safenode-manager")),
-            safenode_manager_version: Some(Version::new(0, 1, 8)),
+            ant_path: Some(PathBuf::from("/home/user/.local/autonomi")),
+            ant_version: Some(Version::new(0, 78, 26)),
+            antnode_path: Some(PathBuf::from("/home/chris/.local/bin/safenode")),
+            antnode_version: Some(Version::new(0, 83, 13)),
+            antctl_path: Some(PathBuf::from("/home/chris/.local/bin/safenode-manager")),
+            antctl_version: Some(Version::new(0, 1, 8)),
         };
 
         let decision =
@@ -109,7 +109,7 @@ mod test {
         assert_matches!(decision, UpdateAssessmentResult::AtLatestVersion);
 
         let decision =
-            perform_update_assessment(&AssetType::NodeManager, &Version::new(0, 1, 8), &settings)?;
+            perform_update_assessment(&AssetType::AntCtl, &Version::new(0, 1, 8), &settings)?;
         assert_matches!(decision, UpdateAssessmentResult::AtLatestVersion);
 
         Ok(())
@@ -119,12 +119,12 @@ mod test {
     fn perform_upgrade_assessment_latest_version_is_less_than_current_should_return_error(
     ) -> Result<()> {
         let settings = Settings {
-            autonomi_path: Some(PathBuf::from("/home/user/.local/autonomi")),
-            autonomi_version: Some(Version::new(0, 78, 26)),
-            safenode_path: Some(PathBuf::from("/home/chris/.local/bin/safenode")),
-            safenode_version: Some(Version::new(0, 83, 13)),
-            safenode_manager_path: Some(PathBuf::from("/home/chris/.local/bin/safenode-manager")),
-            safenode_manager_version: Some(Version::new(0, 1, 8)),
+            ant_path: Some(PathBuf::from("/home/user/.local/autonomi")),
+            ant_version: Some(Version::new(0, 78, 26)),
+            antnode_path: Some(PathBuf::from("/home/chris/.local/bin/safenode")),
+            antnode_version: Some(Version::new(0, 83, 13)),
+            antctl_path: Some(PathBuf::from("/home/chris/.local/bin/safenode-manager")),
+            antctl_version: Some(Version::new(0, 1, 8)),
         };
 
         let result =
@@ -148,7 +148,7 @@ mod test {
         }
 
         let result =
-            perform_update_assessment(&AssetType::NodeManager, &Version::new(0, 1, 7), &settings);
+            perform_update_assessment(&AssetType::AntCtl, &Version::new(0, 1, 7), &settings);
         match result {
             Ok(_) => return Err(eyre!("this test should return an error")),
             Err(e) => assert_eq!(
@@ -164,12 +164,12 @@ mod test {
     fn perform_upgrade_assessment_should_perform_update_when_latest_patch_version_is_greater(
     ) -> Result<()> {
         let settings = Settings {
-            autonomi_path: Some(PathBuf::from("/home/user/.local/autonomi")),
-            autonomi_version: Some(Version::new(0, 78, 26)),
-            safenode_path: Some(PathBuf::from("/home/chris/.local/bin/safenode")),
-            safenode_version: Some(Version::new(0, 83, 13)),
-            safenode_manager_path: Some(PathBuf::from("/home/chris/.local/bin/safenode-manager")),
-            safenode_manager_version: Some(Version::new(0, 1, 7)),
+            ant_path: Some(PathBuf::from("/home/user/.local/autonomi")),
+            ant_version: Some(Version::new(0, 78, 26)),
+            antnode_path: Some(PathBuf::from("/home/chris/.local/bin/safenode")),
+            antnode_version: Some(Version::new(0, 83, 13)),
+            antctl_path: Some(PathBuf::from("/home/chris/.local/bin/safenode-manager")),
+            antctl_version: Some(Version::new(0, 1, 7)),
         };
 
         let decision =
@@ -181,7 +181,7 @@ mod test {
         assert_matches!(decision, UpdateAssessmentResult::PerformUpdate(_));
 
         let decision =
-            perform_update_assessment(&AssetType::NodeManager, &Version::new(0, 1, 8), &settings)?;
+            perform_update_assessment(&AssetType::AntCtl, &Version::new(0, 1, 8), &settings)?;
         assert_matches!(decision, UpdateAssessmentResult::PerformUpdate(_));
 
         Ok(())
@@ -191,12 +191,12 @@ mod test {
     fn perform_upgrade_assessment_should_perform_update_when_latest_minor_version_is_greater(
     ) -> Result<()> {
         let settings = Settings {
-            autonomi_path: Some(PathBuf::from("/home/user/.local/autonomi")),
-            autonomi_version: Some(Version::new(0, 78, 26)),
-            safenode_path: Some(PathBuf::from("/home/chris/.local/bin/safenode")),
-            safenode_version: Some(Version::new(0, 83, 13)),
-            safenode_manager_path: Some(PathBuf::from("/home/chris/.local/bin/safenode-manager")),
-            safenode_manager_version: Some(Version::new(0, 1, 7)),
+            ant_path: Some(PathBuf::from("/home/user/.local/autonomi")),
+            ant_version: Some(Version::new(0, 78, 26)),
+            antnode_path: Some(PathBuf::from("/home/chris/.local/bin/safenode")),
+            antnode_version: Some(Version::new(0, 83, 13)),
+            antctl_path: Some(PathBuf::from("/home/chris/.local/bin/safenode-manager")),
+            antctl_version: Some(Version::new(0, 1, 7)),
         };
 
         let decision =
@@ -208,7 +208,7 @@ mod test {
         assert_matches!(decision, UpdateAssessmentResult::PerformUpdate(_));
 
         let decision =
-            perform_update_assessment(&AssetType::NodeManager, &Version::new(0, 2, 0), &settings)?;
+            perform_update_assessment(&AssetType::AntCtl, &Version::new(0, 2, 0), &settings)?;
         assert_matches!(decision, UpdateAssessmentResult::PerformUpdate(_));
 
         Ok(())
@@ -218,12 +218,12 @@ mod test {
     fn perform_upgrade_assessment_should_perform_update_when_latest_major_version_is_greater(
     ) -> Result<()> {
         let settings = Settings {
-            autonomi_path: Some(PathBuf::from("/home/user/.local/autonomi")),
-            autonomi_version: Some(Version::new(0, 78, 26)),
-            safenode_path: Some(PathBuf::from("/home/chris/.local/bin/safenode")),
-            safenode_version: Some(Version::new(0, 83, 13)),
-            safenode_manager_path: Some(PathBuf::from("/home/chris/.local/bin/safenode-manager")),
-            safenode_manager_version: Some(Version::new(0, 1, 7)),
+            ant_path: Some(PathBuf::from("/home/user/.local/autonomi")),
+            ant_version: Some(Version::new(0, 78, 26)),
+            antnode_path: Some(PathBuf::from("/home/chris/.local/bin/safenode")),
+            antnode_version: Some(Version::new(0, 83, 13)),
+            antctl_path: Some(PathBuf::from("/home/chris/.local/bin/safenode-manager")),
+            antctl_version: Some(Version::new(0, 1, 7)),
         };
 
         let decision =
@@ -235,7 +235,7 @@ mod test {
         assert_matches!(decision, UpdateAssessmentResult::PerformUpdate(_));
 
         let decision =
-            perform_update_assessment(&AssetType::NodeManager, &Version::new(1, 0, 0), &settings)?;
+            perform_update_assessment(&AssetType::AntCtl, &Version::new(1, 0, 0), &settings)?;
         assert_matches!(decision, UpdateAssessmentResult::PerformUpdate(_));
 
         Ok(())

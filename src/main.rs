@@ -29,7 +29,7 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
-    /// Install the autonomi client binary.
+    /// Install the ant client binary.
     ///
     /// The location is platform specific:
     /// - Linux/macOS: $HOME/.local/bin
@@ -53,7 +53,7 @@ enum Commands {
         #[arg(short = 'v', long)]
         version: Option<String>,
     },
-    /// Install the safenode binary.
+    /// Install the antnode binary.
     ///
     /// The location is platform specific:
     /// - Linux/macOS: $HOME/.local/bin
@@ -77,7 +77,7 @@ enum Commands {
         #[arg(short = 'v', long)]
         version: Option<String>,
     },
-    /// Install the safenode-manager binary.
+    /// Install the antctl binary.
     ///
     /// The location is platform specific:
     /// - Linux/macOS: $HOME/.local/bin
@@ -85,8 +85,8 @@ enum Commands {
     ///
     /// On Linux/macOS, the Bash shell profile will be modified to add $HOME/.local/bin to the PATH
     /// variable. On Windows, the user Path variable will be modified to add C:\Users\<username>\autonomi.
-    #[clap(verbatim_doc_comment)]
-    NodeManager {
+    #[clap(verbatim_doc_comment, name = "antctl")]
+    AntCtl {
         /// Override the default installation path.
         ///
         /// Any directories that don't exist will be created.
@@ -120,7 +120,7 @@ async fn main() -> Result<()> {
         }) => {
             println!("**************************************");
             println!("*                                    *");
-            println!("*        Installing autonomi         *");
+            println!("*          Installing ant            *");
             println!("*                                    *");
             println!("**************************************");
             install::check_prerequisites()?;
@@ -133,30 +133,24 @@ async fn main() -> Result<()> {
         }) => {
             println!("**************************************");
             println!("*                                    *");
-            println!("*          Installing safenode       *");
+            println!("*          Installing antnode        *");
             println!("*                                    *");
             println!("**************************************");
             install::check_prerequisites()?;
             process_install_cmd(AssetType::Node, path, version, no_modify_shell_profile).await
         }
-        Some(Commands::NodeManager {
+        Some(Commands::AntCtl {
             path,
             no_modify_shell_profile,
             version,
         }) => {
             println!("**************************************");
             println!("*                                    *");
-            println!("*    Installing safenode-manager     *");
+            println!("*         Installing antctl          *");
             println!("*                                    *");
             println!("**************************************");
             install::check_prerequisites()?;
-            process_install_cmd(
-                AssetType::NodeManager,
-                path,
-                version,
-                no_modify_shell_profile,
-            )
-            .await
+            process_install_cmd(AssetType::AntCtl, path, version, no_modify_shell_profile).await
         }
         Some(Commands::Update {}) => {
             println!("**************************************");

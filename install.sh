@@ -31,7 +31,7 @@ fi
 function print_banner() {
   echo "**************************************"
   echo "*                                    *"
-  echo "*         Installing safeup          *"
+  echo "*         Installing antup           *"
   echo "*                                    *"
   echo "**************************************"
 }
@@ -73,20 +73,20 @@ function detect_arch() {
     armv7*) arch_triple="armv7-unknown-$os-musleabihf" ;;
     *) echo "Architecture $arch not supported"; exit 1 ;;
   esac
-  echo "Will retrieve safeup for $arch_triple architecture"
+  echo "Will retrieve antup for $arch_triple architecture"
 }
 
 function get_latest_version() {
-  release_data=$(curl --silent "https://api.github.com/repos/maidsafe/safeup/releases/latest")
+  release_data=$(curl --silent "https://api.github.com/repos/maidsafe/antup/releases/latest")
   version=$(echo "$release_data" | awk -F': ' '/"tag_name":/ {print $2}' | \
     sed 's/"//g' | sed 's/,//g' | sed 's/v//g')
   download_url=$(echo "$release_data" | \
     awk -F': ' '/"browser_download_url":/ {print $2 $3}' | \
-    grep "safeup-$version-$arch_triple.tar.gz" | sed 's/"//g' | sed 's/,//g')
-  echo "Latest version of safeup is $version"
+    grep "antup-$version-$arch_triple.tar.gz" | sed 's/"//g' | sed 's/,//g')
+  echo "Latest version of antup is $version"
 }
 
-function install_safeup() {
+function install_antup() {
   if [[ $running_as_root -eq 1 ]]; then
     target_dir="/usr/local/bin"
   else
@@ -107,30 +107,30 @@ EOF
   fi
 
   temp_dir=$(mktemp -d)
-  curl -L "$download_url" -o "$temp_dir/safeup.tar.gz"
-  tar -xzf "$temp_dir/safeup.tar.gz" -C "$temp_dir"
-  mv "$temp_dir/safeup" "$target_dir/safeup"
-  chmod +x "$target_dir/safeup"
+  curl -L "$download_url" -o "$temp_dir/antup.tar.gz"
+  tar -xzf "$temp_dir/antup.tar.gz" -C "$temp_dir"
+  mv "$temp_dir/antup" "$target_dir/antup"
+  chmod +x "$target_dir/antup"
   rm -rf "$temp_dir"
-  echo "safeup installed to $target_dir/safeup"
+  echo "antup installed to $target_dir/antup"
 }
 
 function post_install() {
   if [[ $install_client -eq 1 ]]; then
-    echo "Now running safeup to install the safe client..."
-    $target_dir/safeup client
+    echo "Now running antup to install the safe client..."
+    $target_dir/antup client
   fi
   if [[ $install_node -eq 1 ]]; then
-    echo "Now running safeup to install safenode..."
-    $target_dir/safeup node
+    echo "Now running antup to install safenode..."
+    $target_dir/antup node
   fi
   if [[ $running_as_root -eq 1 ]]; then
-    echo "Please run 'safeup --help' to see how to install network components."
+    echo "Please run 'antup --help' to see how to install network components."
   else
     printf "\n"
-    echo "The safeup binary has been installed, but it's not available in this session."
+    echo "The antup binary has been installed, but it's not available in this session."
     echo "You must either run 'source ~/.config/autonomi/env' in this session, or start a new session."
-    echo "When safeup is available, please run 'safeup --help' to see how to install network components."
+    echo "When antup is available, please run 'antup --help' to see how to install network components."
   fi
 }
 
@@ -138,5 +138,5 @@ print_banner
 detect_os
 detect_arch
 get_latest_version
-install_safeup
+install_antup
 post_install

@@ -8,11 +8,11 @@
 
 use crate::install::{AssetType, Settings};
 use crate::update::{perform_update_assessment, UpdateAssessmentResult};
+use ant_releases::AntReleaseRepoActions;
 use color_eyre::{eyre::eyre, Result};
 use lazy_static::lazy_static;
 use prettytable::{Cell, Row, Table};
 use semver::Version;
-use sn_releases::SafeReleaseRepoActions;
 use std::collections::HashMap;
 use std::env::consts::{ARCH, OS};
 use std::path::PathBuf;
@@ -28,11 +28,11 @@ lazy_static! {
         );
         m.insert(
             AssetType::Node,
-            "https://sn-node.s3.eu-west-2.amazonaws.com",
+            "https://antnode.s3.eu-west-2.amazonaws.com",
         );
         m.insert(
-            AssetType::NodeManager,
-            "https://sn-node-manager.s3.eu-west-2.amazonaws.com",
+            AssetType::AntCtl,
+            "https://antctl.s3.eu-west-2.amazonaws.com",
         );
         m
     };
@@ -74,7 +74,7 @@ pub(crate) async fn process_update_cmd() -> Result<()> {
     let autonomi_config_dir_path = get_autonomi_config_dir_path()?;
     let settings_file_path = autonomi_config_dir_path.join("safeup.json");
     let settings = Settings::read(&settings_file_path)?;
-    let release_repo = <dyn SafeReleaseRepoActions>::default_config();
+    let release_repo = <dyn AntReleaseRepoActions>::default_config();
 
     for asset_type in AssetType::variants() {
         println!("Retrieving latest version for {asset_type}...");
@@ -151,7 +151,7 @@ async fn do_install_binary(
     version: Option<Version>,
 ) -> Result<()> {
     let platform = get_platform()?;
-    let release_repo = <dyn SafeReleaseRepoActions>::default_config();
+    let release_repo = <dyn AntReleaseRepoActions>::default_config();
     let (installed_version, bin_path) = crate::install::install_bin(
         asset_type.clone(),
         release_repo,
@@ -166,16 +166,16 @@ async fn do_install_binary(
     let mut settings = Settings::read(&settings_file_path)?;
     match asset_type {
         AssetType::Client => {
-            settings.autonomi_path = Some(bin_path);
-            settings.autonomi_version = Some(installed_version);
+            settings.ant_path = Some(bin_path);
+            settings.ant_version = Some(installed_version);
         }
         AssetType::Node => {
-            settings.safenode_path = Some(bin_path);
-            settings.safenode_version = Some(installed_version);
+            settings.antnode_path = Some(bin_path);
+            settings.antnode_version = Some(installed_version);
         }
-        AssetType::NodeManager => {
-            settings.safenode_manager_path = Some(bin_path);
-            settings.safenode_manager_version = Some(installed_version);
+        AssetType::AntCtl => {
+            settings.antctl_path = Some(bin_path);
+            settings.antctl_version = Some(installed_version);
         }
     }
     settings.save(&settings_file_path)?;
