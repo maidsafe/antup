@@ -10,9 +10,9 @@ on: pull_request
 env:
   RUST_BACKTRACE: 1
   RUSTFLAGS: "-D warnings"
-  CLIENT_VERSION: 0.1.2
-  NODE_VERSION: 0.112.1
-  NODE_MANAGER_VERSION: 0.11.0
+  CLIENT_VERSION: 0.3.0-rc.1
+  NODE_VERSION: 0.3.0-rc.1
+  ANTCTL_VERSION: 0.11.4-rc.1
 
 jobs:
   # The code in this crate uses lots of conditional compilation for cross-platform capabilities.
@@ -142,20 +142,20 @@ jobs:
         run: |
           cargo run -- client --version $env:CLIENT_VERSION
           cargo run -- node --version $env:NODE_VERSION
-          cargo run -- node-manager --version $env:NODE_MANAGER_VERSION
+          cargo run -- antctl --version $env:ANTCTL_VERSION
       - name: Check if binaries are available in new shell session
         shell: pwsh
         run: |
-          if (!(Test-Path "$env:USERPROFILE\autonomi\autonomi.exe")) {
-            Write-Host "autonomi.exe does not exist"
+          if (!(Test-Path "$env:USERPROFILE\autonomi\ant.exe")) {
+            Write-Host "ant.exe does not exist"
             exit 1
           }
-          if (!(Test-Path "$env:USERPROFILE\autonomi\safenode.exe")) {
-            Write-Host "safenode.exe does not exist"
+          if (!(Test-Path "$env:USERPROFILE\autonomi\antnode.exe")) {
+            Write-Host "antnode.exe does not exist"
             exit 1
           }
-          if (!(Test-Path "$env:USERPROFILE\autonomi\safenode-manager.exe")) {
-            Write-Host "safenode-manager.exe does not exist"
+          if (!(Test-Path "$env:USERPROFILE\autonomi\antctl.exe")) {
+            Write-Host "antctl.exe does not exist"
             exit 1
           }
 
@@ -163,8 +163,8 @@ jobs:
           # being modified easily, so we need to refer to the binaries with their full paths.
           # Other manual testing has proven that the changes to the Path environment variable do
           # take effect.
-          $output = & "${env:USERPROFILE}\autonomi\autonomi.exe" --version
-          $version = $output | Select-String -Pattern "autonomi-cli (\d+\.\d+\.\d+(?:-[a-zA-Z0-9]+(?:\.[0-9]+)?)?)"
+          $output = & "${env:USERPROFILE}\autonomi\ant.exe" --version
+          $version = $output | Select-String -Pattern "ant-cli (\d+\.\d+\.\d+(?:-[a-zA-Z0-9]+(?:\.[0-9]+)?)?)"
           $versionNumber = $version.Matches.Groups[1].Value
           if ($versionNumber -eq "$env:CLIENT_VERSION") {
             Write-Host "The correct version of autonomi has been installed"
@@ -175,26 +175,26 @@ jobs:
             exit 1
           }
 
-          $output = & "${env:USERPROFILE}\autonomi\safenode.exe" --version
+          $output = & "${env:USERPROFILE}\autonomi\antnode.exe" --version
           $version = $output -split "`n" | Select-Object -First 1
           $versionNumber = ($version -split "v")[1].Trim()
           if ($versionNumber -eq "$env:NODE_VERSION") {
-            Write-Host "The correct version of safenode has been installed"
+            Write-Host "The correct version of antnode has been installed"
           } else {
-            Write-Host "The correct version of safenode has not been installed"
+            Write-Host "The correct version of antnode has not been installed"
             Write-Host "We expected version $env:NODE_VERSION"
             Write-Host "The downloaded binary has $versionNumber"
             exit 1
           }
 
-          $output = & "${env:USERPROFILE}\autonomi\safenode-manager.exe" --version
+          $output = & "${env:USERPROFILE}\autonomi\antctl.exe" --version
           $version = $output -split "`n" | Select-Object -First 1
           $versionNumber = ($version -split "v")[1].Trim()
-          if ($versionNumber -eq "$env:NODE_MANAGER_VERSION") {
-            Write-Host "The correct version of safenode-manager has been installed"
+          if ($versionNumber -eq "$env:ANTCTL_VERSION") {
+            Write-Host "The correct version of antctl has been installed"
           } else {
-            Write-Host "The correct version of safenode-manager has not been installed"
-            Write-Host "We expected version $env:NODE_MANAGER_VERSION"
+            Write-Host "The correct version of antctl has not been installed"
+            Write-Host "We expected version $env:ANTCTL_VERSION"
             Write-Host "The downloaded binary has $versionNumber"
             exit 1
           }
@@ -215,7 +215,7 @@ jobs:
         run: |
           cargo run -- client --version $CLIENT_VERSION
           cargo run -- node --version $NODE_VERSION
-          cargo run -- node-manager --version $NODE_MANAGER_VERSION
+          cargo run -- antctl --version $ANTCTL_VERSION
       - name: Check if binaries are available in new shell session
         shell: bash
         run: |
@@ -228,36 +228,36 @@ jobs:
           # locations.
           source ~/.config/autonomi/env
 
-          [[ -f "$HOME/.local/bin/autonomi" ]] || { echo "autonomi not in expected location"; exit 1; }
-          [[ -f "$HOME/.local/bin/safenode" ]] || { echo "safenode not in expected location"; exit 1; }
-          [[ -f "$HOME/.local/bin/safenode-manager" ]] || { echo "safenode-manager not in expected location"; exit 1; }
+          [[ -f "$HOME/.local/bin/ant" ]] || { echo "ant not in expected location"; exit 1; }
+          [[ -f "$HOME/.local/bin/antnode" ]] || { echo "antnode not in expected location"; exit 1; }
+          [[ -f "$HOME/.local/bin/antctl" ]] || { echo "antctl not in expected location"; exit 1; }
 
-          version=$(autonomi --version | awk '{ print $2 }')
+          version=$(ant --version | awk '{ print $2 }')
           if [[ "$version" == "$CLIENT_VERSION" ]]; then
-            echo "The correct version of autonomi has been installed"
+            echo "The correct version of ant has been installed"
           else
-            echo "The correct version of autonomi has not been installed"
+            echo "The correct version of ant has not been installed"
             echo "We expected $CLIENT_VERSION"
             echo "The downloaded binary has $version"
             exit 1
           fi
 
-          version=$(safenode --version | head -n 1 | awk '{print $3}' | sed 's/^v//')
+          version=$(antnode --version | head -n 1 | awk '{print $3}' | sed 's/^v//')
           if [[ "$version" == "$NODE_VERSION" ]]; then
-            echo "The correct version of safenode has been installed"
+            echo "The correct version of antnode has been installed"
           else
-            echo "The correct version of safenode has not been installed"
+            echo "The correct version of antnode has not been installed"
             echo "We expected $NODE_VERSION"
             echo "The downloaded binary has $version"
             exit 1
           fi
 
-          version=$(safenode-manager --version | head -n 1 | awk '{print $4}' | sed 's/^v//')
-          if [[ "$version" == "$NODE_MANAGER_VERSION" ]]; then
-            echo "The correct version of safenode-manager has been installed"
+          version=$(antctl --version | head -n 1 | awk '{print $4}' | sed 's/^v//')
+          if [[ "$version" == "$ANTCTL_VERSION" ]]; then
+            echo "The correct version of antctl has been installed"
           else
-            echo "The correct version of safenode-manager has not been installed"
-            echo "We expected $NODE_MANAGER_VERSION"
+            echo "The correct version of antctl has not been installed"
+            echo "We expected $ANTCTL_VERSION"
             echo "The downloaded binary has $version"
             exit 1
           fi
@@ -277,42 +277,42 @@ jobs:
         run: |
           cargo run -- client --version $CLIENT_VERSION
           cargo run -- node --version $NODE_VERSION
-          cargo run -- node-manager --version $NODE_MANAGER_VERSION
+          cargo run -- antctl --version $ANTCTL_VERSION
       - name: Check if binaries are available in new shell session
         run: |
           # As with the Ubuntu test, we need to source the env file to get the binaries on PATH.
           source "/Users/runner/Library/Application Support/autonomi/env"
 
-          [[ -f "$HOME/.local/bin/autonomi" ]] || { echo "autonomi not in expected location"; exit 1; }
-          [[ -f "$HOME/.local/bin/safenode" ]] || { echo "safenode not in expected location"; exit 1; }
-          [[ -f "$HOME/.local/bin/safenode-manager" ]] || { echo "safenode-manager not in expected location"; exit 1; }
+          [[ -f "$HOME/.local/bin/ant" ]] || { echo "ant not in expected location"; exit 1; }
+          [[ -f "$HOME/.local/bin/antnode" ]] || { echo "antnode not in expected location"; exit 1; }
+          [[ -f "$HOME/.local/bin/antctl" ]] || { echo "antctl not in expected location"; exit 1; }
 
-          version=$(autonomi --version | awk '{ print $2 }')
+          version=$(ant --version | awk '{ print $2 }')
           if [[ "$version" == "$CLIENT_VERSION" ]]; then
-            echo "The correct version of autonomi has been installed"
+            echo "The correct version of ant has been installed"
           else
-            echo "The correct version of autonomi has not been installed"
+            echo "The correct version of ant has not been installed"
             echo "We expected $CLIENT_VERSION"
             echo "The downloaded binary has $version"
             exit 1
           fi
 
-          version=$(safenode --version | head -n 1 | awk '{print $3}' | sed 's/^v//')
+          version=$(antnode --version | head -n 1 | awk '{print $3}' | sed 's/^v//')
           if [[ "$version" == "$NODE_VERSION" ]]; then
-            echo "The correct version of safenode has been installed"
+            echo "The correct version of antnode has been installed"
           else
-            echo "The correct version of safenode has not been installed"
+            echo "The correct version of antnode has not been installed"
             echo "We expected $NODE_VERSION"
             echo "The downloaded binary has $version"
             exit 1
           fi
 
-          version=$(safenode-manager --version | head -n 1 | awk '{print $4}' | sed 's/^v//')
-          if [[ "$version" == "$NODE_MANAGER_VERSION" ]]; then
-            echo "The correct version of safenode-manager has been installed"
+          version=$(antctl --version | head -n 1 | awk '{print $4}' | sed 's/^v//')
+          if [[ "$version" == "$ANTCTL_VERSION" ]]; then
+            echo "The correct version of antctl has been installed"
           else
-            echo "The correct version of safenode-manager has not been installed"
-            echo "We expected $NODE_MANAGER_VERSION"
+            echo "The correct version of antctl has not been installed"
+            echo "We expected $ANTCTL_VERSION"
             echo "The downloaded binary has $version"
             exit 1
           fi

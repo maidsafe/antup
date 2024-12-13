@@ -6,6 +6,7 @@
 // KIND, either express or implied. Please review the Licences for the specific language governing
 // permissions and limitations relating to use of the SAFE Network Software.
 
+use ant_releases::{get_running_platform, AntReleaseRepoActions, ArchiveType, ReleaseType};
 #[cfg(windows)]
 use color_eyre::{eyre::eyre, Help, Result};
 #[cfg(unix)]
@@ -17,7 +18,6 @@ use semver::Version;
 use serde::de::Visitor;
 use serde::{Deserializer, Serializer};
 use serde_derive::{Deserialize, Serialize};
-use sn_releases::{get_running_platform, ArchiveType, ReleaseType, SafeReleaseRepoActions};
 use std::env::consts::OS;
 use std::fmt;
 use std::fs::{File, OpenOptions};
@@ -53,19 +53,19 @@ const SET_PATH_FILE_CONTENT: &str = indoc! {r#"
 pub enum AssetType {
     Client,
     Node,
-    NodeManager,
+    AntCtl,
 }
 
 impl AssetType {
     pub fn variants() -> Vec<AssetType> {
-        vec![AssetType::Client, AssetType::Node, AssetType::NodeManager]
+        vec![AssetType::Client, AssetType::Node, AssetType::AntCtl]
     }
 
     pub fn get_release_type(&self) -> ReleaseType {
         match self {
-            AssetType::Client => ReleaseType::Autonomi,
-            AssetType::Node => ReleaseType::Safenode,
-            AssetType::NodeManager => ReleaseType::SafenodeManager,
+            AssetType::Client => ReleaseType::Ant,
+            AssetType::Node => ReleaseType::AntNode,
+            AssetType::AntCtl => ReleaseType::AntCtl,
         }
     }
 }
@@ -75,31 +75,31 @@ impl std::fmt::Display for AssetType {
         match *self {
             AssetType::Client => write!(f, "autonomi"),
             AssetType::Node => write!(f, "safenode"),
-            AssetType::NodeManager => write!(f, "safenode-manager"),
+            AssetType::AntCtl => write!(f, "safenode-manager"),
         }
     }
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Settings {
-    pub autonomi_path: Option<PathBuf>,
+    pub ant_path: Option<PathBuf>,
     #[serde(
         serialize_with = "serialize_version",
         deserialize_with = "deserialize_version"
     )]
-    pub autonomi_version: Option<Version>,
-    pub safenode_path: Option<PathBuf>,
+    pub ant_version: Option<Version>,
+    pub antnode_path: Option<PathBuf>,
     #[serde(
         serialize_with = "serialize_version",
         deserialize_with = "deserialize_version"
     )]
-    pub safenode_version: Option<Version>,
-    pub safenode_manager_path: Option<PathBuf>,
+    pub antnode_version: Option<Version>,
+    pub antctl_path: Option<PathBuf>,
     #[serde(
         serialize_with = "serialize_version",
         deserialize_with = "deserialize_version"
     )]
-    pub safenode_manager_version: Option<Version>,
+    pub antctl_version: Option<Version>,
 }
 
 fn serialize_version<S>(version: &Option<Version>, serializer: S) -> Result<S::Ok, S::Error>
@@ -145,7 +145,7 @@ impl<'de> Visitor<'de> for VersionOptionVisitor {
 
 struct VersionVisitor;
 
-impl<'de> Visitor<'de> for VersionVisitor {
+impl Visitor<'_> for VersionVisitor {
     type Value = Version;
 
     fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
@@ -166,21 +166,21 @@ impl Settings {
             let mut contents = String::new();
             file.read_to_string(&mut contents)?;
             serde_json::from_str(&contents).unwrap_or_else(|_| Settings {
-                autonomi_path: None,
-                autonomi_version: None,
-                safenode_path: None,
-                safenode_version: None,
-                safenode_manager_path: None,
-                safenode_manager_version: None,
+                ant_path: None,
+                ant_version: None,
+                antnode_path: None,
+                antnode_version: None,
+                antctl_path: None,
+                antctl_version: None,
             })
         } else {
             Settings {
-                autonomi_path: None,
-                autonomi_version: None,
-                safenode_path: None,
-                safenode_version: None,
-                safenode_manager_path: None,
-                safenode_manager_version: None,
+                ant_path: None,
+                ant_version: None,
+                antnode_path: None,
+                antnode_version: None,
+                antctl_path: None,
+                antctl_version: None,
             }
         };
         Ok(settings)
@@ -189,25 +189,25 @@ impl Settings {
     pub fn get_install_details(&self, asset_type: &AssetType) -> Option<(PathBuf, Version)> {
         match asset_type {
             AssetType::Client => {
-                if self.autonomi_path.is_some() {
-                    let path = self.autonomi_path.as_ref().unwrap();
-                    let version = self.autonomi_version.as_ref().unwrap();
+                if self.ant_path.is_some() {
+                    let path = self.ant_path.as_ref().unwrap();
+                    let version = self.ant_version.as_ref().unwrap();
                     return Some((path.clone(), version.clone()));
                 }
                 None
             }
             AssetType::Node => {
-                if self.safenode_path.is_some() {
-                    let path = self.safenode_path.as_ref().unwrap();
-                    let version = self.safenode_version.as_ref().unwrap();
+                if self.antnode_path.is_some() {
+                    let path = self.antnode_path.as_ref().unwrap();
+                    let version = self.antnode_version.as_ref().unwrap();
                     return Some((path.clone(), version.clone()));
                 }
                 None
             }
-            AssetType::NodeManager => {
-                if self.safenode_manager_path.is_some() {
-                    let path = self.safenode_manager_path.as_ref().unwrap();
-                    let version = self.safenode_manager_version.as_ref().unwrap();
+            AssetType::AntCtl => {
+                if self.antctl_path.is_some() {
+                    let path = self.antctl_path.as_ref().unwrap();
+                    let version = self.antctl_version.as_ref().unwrap();
                     return Some((path.clone(), version.clone()));
                 }
                 None
@@ -283,7 +283,7 @@ pub fn check_prerequisites() -> Result<()> {
 /// A tuple of the version number and full path of the installed binary.
 pub async fn install_bin(
     asset_type: AssetType,
-    release_repo: Box<dyn SafeReleaseRepoActions>,
+    release_repo: Box<dyn AntReleaseRepoActions>,
     platform: &str,
     dest_dir_path: PathBuf,
     version: Option<Version>,
@@ -418,9 +418,9 @@ pub async fn configure_shell_profile(
 
 fn get_bin_name(asset_type: &AssetType) -> String {
     let mut bin_name = match asset_type {
-        AssetType::Client => "autonomi".to_string(),
-        AssetType::Node => "safenode".to_string(),
-        AssetType::NodeManager => "safenode-manager".to_string(),
+        AssetType::Client => "ant".to_string(),
+        AssetType::Node => "antnode".to_string(),
+        AssetType::AntCtl => "antctl".to_string(),
     };
     if OS == "windows" {
         bin_name.push_str(".exe");
@@ -441,6 +441,10 @@ mod test {
     use super::{configure_shell_profile, install_bin, AssetType, Settings, SET_PATH_FILE_CONTENT};
     #[cfg(windows)]
     use super::{install_bin, AssetType, Settings};
+    use ant_releases::{
+        AntReleaseRepoActions, ArchiveType, Platform, ProgressCallback, ReleaseType,
+        Result as AntReleaseResult,
+    };
     use assert_fs::prelude::*;
     use async_trait::async_trait;
     use color_eyre::Result;
@@ -448,10 +452,6 @@ mod test {
     use mockall::predicate::*;
     use mockall::Sequence;
     use semver::Version;
-    use sn_releases::{
-        ArchiveType, Platform, ProgressCallback, ReleaseType, Result as SnReleaseResult,
-        SafeReleaseRepoActions,
-    };
     #[cfg(unix)]
     use std::os::unix::fs::PermissionsExt;
     use std::path::{Path, PathBuf};
@@ -459,19 +459,19 @@ mod test {
     /// These may seem pointless, but they are useful for when the tests run on different
     /// platforms.
     #[cfg(unix)]
-    const AUTONOMI_BIN_NAME: &str = "autonomi";
+    const ANT_BIN_NAME: &str = "ant";
     #[cfg(windows)]
-    const AUTONOMI_BIN_NAME: &str = "autonomi.exe";
+    const ANT_BIN_NAME: &str = "ant.exe";
     #[cfg(unix)]
     const PLATFORM: &str = "x86_64-unknown-linux-musl";
     #[cfg(windows)]
     const PLATFORM: &str = "x86_64-pc-windows-msvc";
 
     mock! {
-        pub SafeReleaseRepository {}
+        pub AntReleaseRepository {}
         #[async_trait]
-        impl SafeReleaseRepoActions for SafeReleaseRepository {
-            async fn get_latest_version(&self, release_type: &ReleaseType) -> SnReleaseResult<Version>;
+        impl AntReleaseRepoActions for AntReleaseRepository {
+            async fn get_latest_version(&self, release_type: &ReleaseType) -> AntReleaseResult<Version>;
             async fn download_release_from_s3(
                 &self,
                 release_type: &ReleaseType,
@@ -480,15 +480,15 @@ mod test {
                 archive_type: &ArchiveType,
                 download_dir: &Path,
                 callback: &ProgressCallback
-            ) -> SnReleaseResult<PathBuf>;
+            ) -> AntReleaseResult<PathBuf>;
             async fn download_release(
                 &self,
                 url: &str,
                 dest_dir_path: &Path,
                 callback: &ProgressCallback,
-            ) -> SnReleaseResult<PathBuf>;
-            async fn download_winsw(&self, dest_path: &Path, callback: &ProgressCallback) -> SnReleaseResult<()>;
-            fn extract_release_archive(&self, archive_path: &Path, extract_dir: &Path) -> SnReleaseResult<PathBuf>;
+            ) -> AntReleaseResult<PathBuf>;
+            async fn download_winsw(&self, dest_path: &Path, callback: &ProgressCallback) -> AntReleaseResult<()>;
+            fn extract_release_archive(&self, archive_path: &Path, extract_dir: &Path) -> AntReleaseResult<PathBuf>;
         }
     }
 
@@ -500,12 +500,12 @@ mod test {
         let temp_dir = assert_fs::TempDir::new()?;
 
         let install_dir = temp_dir.child("install");
-        let installed_autonomi = install_dir.child("autonomi");
+        let installed_ant = install_dir.child("ant");
         // By creating this file we are 'pretending' that it was extracted to the specified
         // location. It's done so we can assert that the file is made executable.
-        installed_autonomi.write_binary(b"fake autonomi bin")?;
+        installed_ant.write_binary(b"fake ant bin")?;
 
-        let mut mock_release_repo = MockSafeReleaseRepository::new();
+        let mut mock_release_repo = MockAntReleaseRepository::new();
         let mut seq = Sequence::new();
         mock_release_repo
             .expect_get_latest_version()
@@ -516,7 +516,7 @@ mod test {
         mock_release_repo
             .expect_download_release_from_s3()
             .with(
-                eq(&ReleaseType::Autonomi),
+                eq(&ReleaseType::Ant),
                 eq(latest_version.clone()),
                 always(), // Varies per platform
                 eq(&ArchiveType::TarGz),
@@ -533,7 +533,7 @@ mod test {
             .in_sequence(&mut seq);
 
         let mut install_dir_path_clone = install_dir.to_path_buf().clone();
-        install_dir_path_clone.push("autonomi");
+        install_dir_path_clone.push("ant");
         mock_release_repo
             .expect_extract_release_archive()
             .with(
@@ -557,15 +557,12 @@ mod test {
         .await?;
 
         assert_eq!(version, Version::new(0, 86, 55));
-        assert_eq!(bin_path, installed_autonomi.to_path_buf());
+        assert_eq!(bin_path, installed_ant.to_path_buf());
 
         #[cfg(unix)]
         {
-            let extracted_autonomi_metadata = std::fs::metadata(installed_autonomi.path())?;
-            assert_eq!(
-                (extracted_autonomi_metadata.permissions().mode() & 0o777),
-                0o755
-            );
+            let extracted_ant_metadata = std::fs::metadata(installed_ant.path())?;
+            assert_eq!((extracted_ant_metadata.permissions().mode() & 0o777), 0o755);
         }
 
         Ok(())
@@ -580,12 +577,12 @@ mod test {
         let temp_dir = assert_fs::TempDir::new()?;
 
         let install_dir = temp_dir.child("install/using/many/paths");
-        let installed_autonomi = install_dir.child("autonomi");
+        let installed_ant = install_dir.child("ant");
         // By creating this file we are 'pretending' that it was extracted to the specified
         // location. It's done so we can assert that the file is made executable.
-        installed_autonomi.write_binary(b"fake autonomi bin")?;
+        installed_ant.write_binary(b"fake ant bin")?;
 
-        let mut mock_release_repo = MockSafeReleaseRepository::new();
+        let mut mock_release_repo = MockAntReleaseRepository::new();
         let mut seq = Sequence::new();
         mock_release_repo
             .expect_get_latest_version()
@@ -596,7 +593,7 @@ mod test {
         mock_release_repo
             .expect_download_release_from_s3()
             .with(
-                eq(&ReleaseType::Autonomi),
+                eq(&ReleaseType::Ant),
                 eq(latest_version.clone()),
                 always(), // Varies per platform
                 eq(&ArchiveType::TarGz),
@@ -613,7 +610,7 @@ mod test {
             .in_sequence(&mut seq);
 
         let mut install_dir_path_clone = install_dir.to_path_buf().clone();
-        install_dir_path_clone.push("autonomi");
+        install_dir_path_clone.push("ant");
         mock_release_repo
             .expect_extract_release_archive()
             .with(
@@ -637,7 +634,7 @@ mod test {
         .await?;
 
         assert_eq!(version, Version::new(0, 86, 55));
-        assert_eq!(bin_path, installed_autonomi.to_path_buf());
+        assert_eq!(bin_path, installed_ant.to_path_buf());
 
         Ok(())
     }
@@ -649,17 +646,17 @@ mod test {
         let temp_dir = assert_fs::TempDir::new()?;
 
         let install_dir = temp_dir.child("install");
-        let installed_autonomi = install_dir.child("autonomi");
+        let installed_ant = install_dir.child("autonomi");
         // By creating this file we are 'pretending' that it was extracted to the specified
         // location. It's done so we can assert that the file is made executable.
-        installed_autonomi.write_binary(b"fake autonomi bin")?;
+        installed_ant.write_binary(b"fake autonomi bin")?;
 
-        let mut mock_release_repo = MockSafeReleaseRepository::new();
+        let mut mock_release_repo = MockAntReleaseRepository::new();
         let mut seq = Sequence::new();
         mock_release_repo
             .expect_download_release_from_s3()
             .with(
-                eq(&ReleaseType::Autonomi),
+                eq(&ReleaseType::Ant),
                 eq(specific_version.clone()),
                 always(), // Varies per platform
                 eq(&ArchiveType::TarGz),
@@ -700,7 +697,7 @@ mod test {
         .await?;
 
         assert_eq!(version, specific_version);
-        assert_eq!(bin_path, installed_autonomi.to_path_buf());
+        assert_eq!(bin_path, installed_ant.to_path_buf());
 
         Ok(())
     }
@@ -780,8 +777,8 @@ mod test {
     #[tokio::test]
     async fn save_should_write_new_settings_when_settings_file_does_not_exist() -> Result<()> {
         let tmp_data_path = assert_fs::TempDir::new()?;
-        let settings_file = tmp_data_path.child("safeup.json");
-        let safe_bin_file = tmp_data_path.child(AUTONOMI_BIN_NAME);
+        let settings_file = tmp_data_path.child("antup.json");
+        let safe_bin_file = tmp_data_path.child(ANT_BIN_NAME);
         safe_bin_file.write_binary(b"fake safe code")?;
         let safenode_bin_file = tmp_data_path.child("safenode");
         safenode_bin_file.write_binary(b"fake safenode code")?;
@@ -791,33 +788,27 @@ mod test {
         testnet_bin_file.write_binary(b"fake testnet code")?;
 
         let settings = Settings {
-            autonomi_path: Some(safe_bin_file.to_path_buf()),
-            autonomi_version: Some(Version::new(0, 75, 1)),
-            safenode_path: Some(safenode_bin_file.to_path_buf()),
-            safenode_version: Some(Version::new(0, 75, 2)),
-            safenode_manager_path: Some(safenode_manager_bin_file.to_path_buf()),
-            safenode_manager_version: Some(Version::new(0, 1, 8)),
+            ant_path: Some(safe_bin_file.to_path_buf()),
+            ant_version: Some(Version::new(0, 75, 1)),
+            antnode_path: Some(safenode_bin_file.to_path_buf()),
+            antnode_version: Some(Version::new(0, 75, 2)),
+            antctl_path: Some(safenode_manager_bin_file.to_path_buf()),
+            antctl_version: Some(Version::new(0, 1, 8)),
         };
 
         settings.save(&settings_file.to_path_buf())?;
 
         settings_file.assert(predicates::path::is_file());
         let settings = Settings::read(&settings_file.to_path_buf())?;
-        assert_eq!(settings.autonomi_path, Some(safe_bin_file.to_path_buf()));
-        assert_eq!(settings.autonomi_version, Some(Version::new(0, 75, 1)));
+        assert_eq!(settings.ant_path, Some(safe_bin_file.to_path_buf()));
+        assert_eq!(settings.ant_version, Some(Version::new(0, 75, 1)));
+        assert_eq!(settings.antnode_path, Some(safenode_bin_file.to_path_buf()));
+        assert_eq!(settings.antnode_version, Some(Version::new(0, 75, 2)));
         assert_eq!(
-            settings.safenode_path,
-            Some(safenode_bin_file.to_path_buf())
-        );
-        assert_eq!(settings.safenode_version, Some(Version::new(0, 75, 2)));
-        assert_eq!(
-            settings.safenode_manager_path,
+            settings.antctl_path,
             Some(safenode_manager_bin_file.to_path_buf())
         );
-        assert_eq!(
-            settings.safenode_manager_version,
-            Some(Version::new(0, 1, 8))
-        );
+        assert_eq!(settings.antctl_version, Some(Version::new(0, 1, 8)));
         Ok(())
     }
 
@@ -828,9 +819,9 @@ mod test {
             PathBuf::from("some")
                 .join("parent")
                 .join("dirs")
-                .join("safeup.json"),
+                .join("antup.json"),
         );
-        let safe_bin_file = tmp_data_path.child(AUTONOMI_BIN_NAME);
+        let safe_bin_file = tmp_data_path.child(ANT_BIN_NAME);
         safe_bin_file.write_binary(b"fake safe code")?;
         let safenode_bin_file = tmp_data_path.child("safenode");
         safenode_bin_file.write_binary(b"fake safenode code")?;
@@ -840,33 +831,27 @@ mod test {
         testnet_bin_file.write_binary(b"fake testnet code")?;
 
         let settings = Settings {
-            autonomi_path: Some(safe_bin_file.to_path_buf()),
-            autonomi_version: Some(Version::new(0, 75, 1)),
-            safenode_path: Some(safenode_bin_file.to_path_buf()),
-            safenode_version: Some(Version::new(0, 75, 2)),
-            safenode_manager_path: Some(safenode_manager_bin_file.to_path_buf()),
-            safenode_manager_version: Some(Version::new(0, 1, 8)),
+            ant_path: Some(safe_bin_file.to_path_buf()),
+            ant_version: Some(Version::new(0, 75, 1)),
+            antnode_path: Some(safenode_bin_file.to_path_buf()),
+            antnode_version: Some(Version::new(0, 75, 2)),
+            antctl_path: Some(safenode_manager_bin_file.to_path_buf()),
+            antctl_version: Some(Version::new(0, 1, 8)),
         };
 
         settings.save(&settings_file.to_path_buf())?;
 
         settings_file.assert(predicates::path::is_file());
         let settings = Settings::read(&settings_file.to_path_buf())?;
-        assert_eq!(settings.autonomi_path, Some(safe_bin_file.to_path_buf()));
-        assert_eq!(settings.autonomi_version, Some(Version::new(0, 75, 1)));
+        assert_eq!(settings.ant_path, Some(safe_bin_file.to_path_buf()));
+        assert_eq!(settings.ant_version, Some(Version::new(0, 75, 1)));
+        assert_eq!(settings.antnode_path, Some(safenode_bin_file.to_path_buf()));
+        assert_eq!(settings.antnode_version, Some(Version::new(0, 75, 2)));
         assert_eq!(
-            settings.safenode_path,
-            Some(safenode_bin_file.to_path_buf())
-        );
-        assert_eq!(settings.safenode_version, Some(Version::new(0, 75, 2)));
-        assert_eq!(
-            settings.safenode_manager_path,
+            settings.antctl_path,
             Some(safenode_manager_bin_file.to_path_buf())
         );
-        assert_eq!(
-            settings.safenode_manager_version,
-            Some(Version::new(0, 1, 8))
-        );
+        assert_eq!(settings.antctl_version, Some(Version::new(0, 1, 8)));
         Ok(())
     }
 }

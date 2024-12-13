@@ -1,6 +1,6 @@
 #!/usr/bin/env just --justfile
 
-release_repo := "maidsafe/safeup"
+release_repo := "maidsafe/antup"
 
 build-release-artifacts arch:
   #!/usr/bin/env bash
@@ -48,9 +48,9 @@ build-release-artifacts arch:
   cargo clean
   if [[ $arch == arm* || $arch == armv7* || $arch == aarch64* ]]; then
     cargo install cross
-    cross build --release --target $arch --bin safeup
+    cross build --release --target $arch --bin antup
   else
-    cargo build --release --target $arch --bin safeup
+    cargo build --release --target $arch --bin antup
   fi
 
   find target/$arch/release -maxdepth 1 -type f -exec cp '{}' artifacts \;
@@ -69,7 +69,7 @@ package-release-assets:
     "armv7-unknown-linux-musleabihf"
     "aarch64-unknown-linux-musl"
   )
-  bin="safeup"
+  bin="antup"
   version=$(cat Cargo.toml | grep "^version" | awk -F '=' '{ print $2 }' | xargs)
 
   rm -rf deploy/$bin
@@ -90,14 +90,14 @@ upload-release-assets:
   set -e
   version=$(cat Cargo.toml | grep "^version" | awk -F '=' '{ print $2 }' | xargs)
   echo "Uploading assets to release..."
-  cd deploy/safeup
+  cd deploy/antup
   ls | xargs gh release upload "v${version}" --repo {{release_repo}}
 
 upload-release-assets-to-s3:
   #!/usr/bin/env bash
   set -e
 
-  cd deploy/safeup
+  cd deploy/antup
   for file in *.zip *.tar.gz; do
-    aws s3 cp "$file" "s3://sn-safeup/$file" --acl public-read
+    aws s3 cp "$file" "s3://antup/$file" --acl public-read
   done
