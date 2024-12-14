@@ -3,7 +3,7 @@ name = "antup"
 authors = ["MaidSafe Developers <dev@maidsafe.net>"]
 description = "CLI for installing components for accessing the Autonomi network"
 license = "GPL-3.0"
-version = "0.8.1"
+version = "0.9.0"
 edition = "2021"
 
 [[bin]]
