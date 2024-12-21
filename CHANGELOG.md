@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.0](https://github.com/maidsafe/antup/compare/v0.9.0...v0.10.0) - 2024-12-21
+
+### Other
+- rebrand more references from safe -> ant
+
 ## [0.8.1](https://github.com/maidsafe/safeup/compare/v0.8.0...v0.8.1) - 2024-10-24
 
 ### Fixed
