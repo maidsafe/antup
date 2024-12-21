@@ -117,11 +117,11 @@ EOF
 
 function post_install() {
   if [[ $install_client -eq 1 ]]; then
-    echo "Now running antup to install the safe client..."
+    echo "Now running antup to install the ant client..."
     $target_dir/antup client
   fi
   if [[ $install_node -eq 1 ]]; then
-    echo "Now running antup to install safenode..."
+    echo "Now running antup to install antnode..."
     $target_dir/antup node
   fi
   if [[ $running_as_root -eq 1 ]]; then

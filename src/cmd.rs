@@ -72,7 +72,7 @@ pub(crate) async fn process_install_cmd(
 
 pub(crate) async fn process_update_cmd() -> Result<()> {
     let autonomi_config_dir_path = get_autonomi_config_dir_path()?;
-    let settings_file_path = autonomi_config_dir_path.join("safeup.json");
+    let settings_file_path = autonomi_config_dir_path.join("antup.json");
     let settings = Settings::read(&settings_file_path)?;
     let release_repo = <dyn AntReleaseRepoActions>::default_config();
 
@@ -116,7 +116,7 @@ pub(crate) async fn process_update_cmd() -> Result<()> {
 
 pub(crate) fn process_ls_command() -> Result<()> {
     let autonomi_config_dir_path = get_autonomi_config_dir_path()?;
-    let settings_file_path = autonomi_config_dir_path.join("safeup.json");
+    let settings_file_path = autonomi_config_dir_path.join("antup.json");
     let settings = Settings::read(&settings_file_path)?;
     let mut table = Table::new();
     table.add_row(Row::new(vec![
@@ -162,7 +162,7 @@ async fn do_install_binary(
     .await?;
 
     let autonomi_config_dir_path = get_autonomi_config_dir_path()?;
-    let settings_file_path = autonomi_config_dir_path.join("safeup.json");
+    let settings_file_path = autonomi_config_dir_path.join("antup.json");
     let mut settings = Settings::read(&settings_file_path)?;
     match asset_type {
         AssetType::Client => {
@@ -208,7 +208,7 @@ fn get_platform() -> Result<String> {
                 "We currently do not have binaries for the {OS}/{ARCH} combination"
             )),
         },
-        &_ => Err(eyre!("{OS} is not currently supported by safeup")),
+        &_ => Err(eyre!("{OS} is not currently supported by antup")),
     }
 }
 
@@ -243,7 +243,7 @@ fn get_shell_profile_path() -> Result<PathBuf> {
             match shell_bin_name.as_str() {
                 "bash" => ".bashrc",
                 "zsh" => ".zshrc",
-                _ => return Err(eyre!("shell {shell} is not supported by safeup")),
+                _ => return Err(eyre!("shell {shell} is not supported by antup")),
             }
         }
         Err(e) => return Err(eyre!(e)),

@@ -32,7 +32,7 @@ pub fn perform_update_assessment(
                 return Err(eyre!(
                     "The latest version is less than the current version of your binary."
                 )
-                .suggestion("You may want to remove your safeup.conf and install safeup again."))
+                .suggestion("You may want to remove your antup.json and install antup again."))
             }
             Ordering::Greater => return Ok(UpdateAssessmentResult::PerformUpdate(installed_path)),
         }

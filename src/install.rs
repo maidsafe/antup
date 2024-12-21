@@ -73,9 +73,9 @@ impl AssetType {
 impl std::fmt::Display for AssetType {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match *self {
-            AssetType::Client => write!(f, "autonomi"),
-            AssetType::Node => write!(f, "safenode"),
-            AssetType::AntCtl => write!(f, "safenode-manager"),
+            AssetType::Client => write!(f, "ant"),
+            AssetType::Node => write!(f, "antnode"),
+            AssetType::AntCtl => write!(f, "antctl"),
         }
     }
 }
@@ -264,7 +264,7 @@ pub fn check_prerequisites() -> Result<()> {
     )
 }
 
-/// Installs either the `safe` or `safenode` binary for the platform specified.
+/// Installs either the `ant` or `antnode` binary for the platform specified.
 ///
 /// The latest version is retrieved from Github, then the archive with the binary is downloaded
 /// from S3 and extracted to the specified location.
@@ -778,21 +778,21 @@ mod test {
     async fn save_should_write_new_settings_when_settings_file_does_not_exist() -> Result<()> {
         let tmp_data_path = assert_fs::TempDir::new()?;
         let settings_file = tmp_data_path.child("antup.json");
-        let safe_bin_file = tmp_data_path.child(ANT_BIN_NAME);
-        safe_bin_file.write_binary(b"fake safe code")?;
-        let safenode_bin_file = tmp_data_path.child("safenode");
-        safenode_bin_file.write_binary(b"fake safenode code")?;
-        let safenode_manager_bin_file = tmp_data_path.child("safenode-manager");
-        safenode_manager_bin_file.write_binary(b"fake safenode-manager code")?;
+        let ant_bin_file = tmp_data_path.child(ANT_BIN_NAME);
+        ant_bin_file.write_binary(b"fake safe code")?;
+        let antnode_bin_file = tmp_data_path.child("safenode");
+        antnode_bin_file.write_binary(b"fake safenode code")?;
+        let antctl_bin_file = tmp_data_path.child("safenode-manager");
+        antctl_bin_file.write_binary(b"fake safenode-manager code")?;
         let testnet_bin_file = tmp_data_path.child("testnet");
         testnet_bin_file.write_binary(b"fake testnet code")?;
 
         let settings = Settings {
-            ant_path: Some(safe_bin_file.to_path_buf()),
+            ant_path: Some(ant_bin_file.to_path_buf()),
             ant_version: Some(Version::new(0, 75, 1)),
-            antnode_path: Some(safenode_bin_file.to_path_buf()),
+            antnode_path: Some(antnode_bin_file.to_path_buf()),
             antnode_version: Some(Version::new(0, 75, 2)),
-            antctl_path: Some(safenode_manager_bin_file.to_path_buf()),
+            antctl_path: Some(antctl_bin_file.to_path_buf()),
             antctl_version: Some(Version::new(0, 1, 8)),
         };
 
@@ -800,14 +800,11 @@ mod test {
 
         settings_file.assert(predicates::path::is_file());
         let settings = Settings::read(&settings_file.to_path_buf())?;
-        assert_eq!(settings.ant_path, Some(safe_bin_file.to_path_buf()));
+        assert_eq!(settings.ant_path, Some(ant_bin_file.to_path_buf()));
         assert_eq!(settings.ant_version, Some(Version::new(0, 75, 1)));
-        assert_eq!(settings.antnode_path, Some(safenode_bin_file.to_path_buf()));
+        assert_eq!(settings.antnode_path, Some(antnode_bin_file.to_path_buf()));
         assert_eq!(settings.antnode_version, Some(Version::new(0, 75, 2)));
-        assert_eq!(
-            settings.antctl_path,
-            Some(safenode_manager_bin_file.to_path_buf())
-        );
+        assert_eq!(settings.antctl_path, Some(antctl_bin_file.to_path_buf()));
         assert_eq!(settings.antctl_version, Some(Version::new(0, 1, 8)));
         Ok(())
     }
@@ -821,21 +818,21 @@ mod test {
                 .join("dirs")
                 .join("antup.json"),
         );
-        let safe_bin_file = tmp_data_path.child(ANT_BIN_NAME);
-        safe_bin_file.write_binary(b"fake safe code")?;
-        let safenode_bin_file = tmp_data_path.child("safenode");
-        safenode_bin_file.write_binary(b"fake safenode code")?;
-        let safenode_manager_bin_file = tmp_data_path.child("safenode-manager");
-        safenode_manager_bin_file.write_binary(b"fake safenode-manager code")?;
+        let ant_bin_file = tmp_data_path.child(ANT_BIN_NAME);
+        ant_bin_file.write_binary(b"fake safe code")?;
+        let antnode_bin_file = tmp_data_path.child("safenode");
+        antnode_bin_file.write_binary(b"fake safenode code")?;
+        let antctl_bin_file = tmp_data_path.child("safenode-manager");
+        antctl_bin_file.write_binary(b"fake safenode-manager code")?;
         let testnet_bin_file = tmp_data_path.child("testnet");
         testnet_bin_file.write_binary(b"fake testnet code")?;
 
         let settings = Settings {
-            ant_path: Some(safe_bin_file.to_path_buf()),
+            ant_path: Some(ant_bin_file.to_path_buf()),
             ant_version: Some(Version::new(0, 75, 1)),
-            antnode_path: Some(safenode_bin_file.to_path_buf()),
+            antnode_path: Some(antnode_bin_file.to_path_buf()),
             antnode_version: Some(Version::new(0, 75, 2)),
-            antctl_path: Some(safenode_manager_bin_file.to_path_buf()),
+            antctl_path: Some(antctl_bin_file.to_path_buf()),
             antctl_version: Some(Version::new(0, 1, 8)),
         };
 
@@ -843,14 +840,11 @@ mod test {
 
         settings_file.assert(predicates::path::is_file());
         let settings = Settings::read(&settings_file.to_path_buf())?;
-        assert_eq!(settings.ant_path, Some(safe_bin_file.to_path_buf()));
+        assert_eq!(settings.ant_path, Some(ant_bin_file.to_path_buf()));
         assert_eq!(settings.ant_version, Some(Version::new(0, 75, 1)));
-        assert_eq!(settings.antnode_path, Some(safenode_bin_file.to_path_buf()));
+        assert_eq!(settings.antnode_path, Some(antnode_bin_file.to_path_buf()));
         assert_eq!(settings.antnode_version, Some(Version::new(0, 75, 2)));
-        assert_eq!(
-            settings.antctl_path,
-            Some(safenode_manager_bin_file.to_path_buf())
-        );
+        assert_eq!(settings.antctl_path, Some(antctl_bin_file.to_path_buf()));
         assert_eq!(settings.antctl_version, Some(Version::new(0, 1, 8)));
         Ok(())
     }
